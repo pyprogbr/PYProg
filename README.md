@@ -4,6 +4,8 @@ Programação de rádios: canais, ajustes, vozes e imagem de abertura.
 
 **[Baixar a versão mais recente](https://github.com/pyprogbr/PYProg/releases/latest)**
 
+![Downloads](https://img.shields.io/github/downloads/pyprogbr/PYProg/total?label=downloads)
+
 Na página da versão, baixe `Instalar_PYProg_<versão>.exe` e execute. Não é preciso instalar mais nada. Se o Windows mostrar "O Windows protegeu o computador", clique em "Mais informações" e depois em "Executar assim mesmo".
 
 Depois de instalado, o PYProg avisa quando houver versão nova.
