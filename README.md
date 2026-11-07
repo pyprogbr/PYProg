@@ -17,7 +17,7 @@ Depois de instalado, o PYProg avisa quando houver versão nova.
 - Ordena, arrasta e organiza canais, zonas, contatos e listas, mantendo as referências atualizadas.
 - Bloqueia a transmissão fora das faixas liberadas.
 - Gera vozes em português, inglês e espanhol para o rádio.
-- Troca a imagem de abertura (UV-17 Pro GPS).
+- Troca a imagem de abertura (UV-17 Pro GPS, UV-21 Pro e UV-21 Pro GPS).
 - Exporta a lista de canais em PDF ou CSV.
 
 ## Modelos
@@ -27,7 +27,7 @@ Depois de instalado, o PYProg avisa quando houver versão nova.
 | Baofeng UV-17 Pro GPS | pelo cabo | sim | sim | testado |
 | Baofeng UV-17 Pro / R / L | pelo cabo | sim | não | experimental |
 | Baofeng UV-17R Plus | pelo cabo | não | não | experimental |
-| Baofeng UV-21 Pro / Pro GPS | pelo cabo | não | não | experimental |
+| Baofeng UV-21 Pro / Pro GPS | pelo cabo | não | sim | experimental |
 | Baofeng UV-5R e compatíveis | pelo cabo | não | não | testado |
 | Icom IC-2730A | pelo cabo | não | não | testado |
 | Retevis RT3S | arquivo .rdt do CPS | não | não | testado com o CPS |
