@@ -39,7 +39,7 @@ Para editar as vozes, o PYProg pede uma vez o pacote base de vozes (.vpa) que ac
 
 ## Aviso
 
-Esta é uma versão de testes (beta), distribuída gratuitamente e sem garantia de qualquer tipo, podendo conter falhas. Antes de gravar alterações, confira o modelo selecionado e guarde cópia da programação e dos arquivos originais de voz e imagem, que não podem ser recuperados a partir do rádio. O uso é de responsabilidade exclusiva do usuário e deve observar as normas da Anatel.
+Esta é uma versão de testes (beta), distribuída gratuitamente e sem garantia de qualquer tipo, podendo conter falhas. Antes de gravar alterações, confira o modelo selecionado e guarde uma cópia da programação. As vozes e a imagem de abertura gravadas no rádio não podem ser lidas de volta pelo computador: depois de trocadas, as originais não podem ser restauradas. O uso é de responsabilidade exclusiva do usuário e deve observar as normas da Anatel.
 
 Projeto independente, sem vínculo com fabricantes de rádios ou com o projeto CHIRP.
 
