@@ -6,14 +6,14 @@ Programação de rádios: canais, ajustes, vozes e imagem de abertura.
 
 ![Downloads](https://img.shields.io/github/downloads/pyprogbr/PYProg/total?label=downloads)
 
-Na página da versão, baixe `Instalar_PYProg_<versão>.exe` e execute. Não é preciso instalar mais nada. Se o Windows mostrar "O Windows protegeu o computador", clique em "Mais informações" e depois em "Executar assim mesmo".
+Na página da versão, baixe `Instalar_PYProg_<versão>.exe` e execute (no Windows 7 ou 8, use `Windows7_Instalar_PYProg_<versão>.exe`). Não é preciso instalar mais nada. Se o Windows mostrar "O Windows protegeu o computador", clique em "Mais informações" e depois em "Executar assim mesmo".
 
 Depois de instalado, o PYProg avisa quando houver versão nova.
 
 ## O que o programa faz
 
 - Lê e grava a programação pelo cabo: canais, zonas ou bancos e ajustes, com backup automático.
-- Edita o arquivo .rdt do CPS do Retevis RT3S e do Baofeng DM-1701, com todas as telas do CPS.
+- Lê e grava o Retevis RT3S e o Baofeng DM-1701 (experimental) e edita o arquivo .rdt do CPS, com todas as telas do CPS.
 - Ordena, arrasta e organiza canais, zonas, contatos e listas, mantendo as referências atualizadas.
 - Bloqueia a transmissão fora das faixas liberadas.
 - Gera vozes em português, inglês e espanhol para o rádio.
@@ -30,8 +30,8 @@ Depois de instalado, o PYProg avisa quando houver versão nova.
 | Baofeng UV-21 Pro / Pro GPS | pelo cabo | não | sim | experimental |
 | Baofeng UV-5R e compatíveis | pelo cabo | não | não | testado |
 | Icom IC-2730A | pelo cabo | não | não | testado |
-| Retevis RT3S | arquivo .rdt do CPS | não | não | testado com o CPS |
-| Baofeng DM-1701 | arquivo .rdt do CPS | não | não | experimental |
+| Retevis RT3S | pelo cabo | não | não | experimental (lido e gravado num rádio real) |
+| Baofeng DM-1701 | pelo cabo | não | não | experimental |
 
 ## Arquivos de terceiros
 
