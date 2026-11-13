@@ -13,7 +13,7 @@ Depois de instalado, o PYProg avisa quando houver versão nova.
 ## O que o programa faz
 
 - Lê e grava a programação pelo cabo: canais, zonas ou bancos e ajustes, com backup automático.
-- Lê e grava o Retevis RT3S e o Baofeng DM-1701 (este ainda experimental) e edita o arquivo .rdt do CPS, com todas as telas do CPS. O firmware OpenGD77 não é suportado.
+- Lê e grava o Retevis RT3S e edita o arquivo .rdt do CPS, com todas as telas do CPS. O firmware OpenGD77 não é suportado.
 - Ordena, arrasta e organiza canais, zonas, contatos e listas, mantendo as referências atualizadas.
 - Bloqueia a transmissão fora das faixas liberadas.
 - Gera vozes em português, inglês e espanhol para o rádio.
@@ -30,8 +30,8 @@ Depois de instalado, o PYProg avisa quando houver versão nova.
 | Baofeng UV-21 Pro / Pro GPS | sim | não | sim | experimental |
 | Baofeng UV-5R e compatíveis | sim | não | não | testado |
 | Icom IC-2730A | sim | não | não | testado |
+| Icom IC-2720H | sim | não | não | experimental |
 | Retevis RT3S | sim | não | não | testado |
-| Baofeng DM-1701 | sim | não | não | experimental |
 
 ## Arquivos de terceiros
 
