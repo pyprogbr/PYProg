@@ -1,0 +1,60 @@
+PYProg: componentes de terceiros
+================================
+
+O PYProg é distribuído sob a GNU General Public License, versão 3 (GPL-3.0),
+porque inclui código do CHIRP, que usa essa licença. O texto completo da GPL-3.0
+está na primeira entrada desta lista. O código-fonte de cada versão é publicado
+junto com o instalador.
+
+Código incluído no programa
+---------------------------
+CHIRP (https://www.chirpmyradio.com), GPL-3.0.
+  Pasta chirp/: chirp_common, bitwise, bitwise_grammar, pyPEG, memmap, errors,
+  util, settings, directory e os drivers icf e ic2730, sem alterações.
+  O protocolo de comunicação de parte dos rádios foi escrito a partir dos
+  drivers baofeng_uv17Pro (Sander van der Wel e outros) e uv5r do CHIRP.
+dmrconfig (https://github.com/sergev/dmrconfig), de Serge Vakulenko, Apache-2.0:
+  referência para o mapa de memória dos arquivos .rdt e para o protocolo USB
+  de rádios DMR.
+  Nenhum código do dmrconfig foi copiado.
+
+Programas que acompanham o instalador
+-------------------------------------
+Python (Python Software Foundation License), em versão standalone para Windows
+  (python-build-standalone), com Tcl/Tk (licença BSD).
+pyserial (BSD-3-Clause): comunicação com o cabo.
+PythonVista (https://github.com/adang1345/PythonVista), de Aohan Dang, MIT: Python 3.12
+  recompilado para Windows 7 e 8, usado só no instalador para esses Windows.
+pyusb (BSD-3-Clause) e libusb (LGPL-2.1, via libusb-package, Apache-2.0):
+  conexão USB com rádios DMR.
+Pillow (MIT-CMU): imagem de abertura.
+numpy (BSD-3-Clause): áudio.
+reportlab (BSD-3-Clause): exportação da lista de canais em PDF.
+miniaudio (MIT): conversão de áudio.
+edge-tts (LGPL-3.0): geração de vozes.
+aiohttp, certifi (MPL-2.0) e demais dependências do edge-tts: licenças MIT,
+  Apache-2.0, BSD e MPL-2.0, listadas a seguir com o texto de cada uma.
+
+Serviço on-line
+---------------
+A geração de vozes usa o serviço de leitura em voz alta da Microsoft (vozes
+neurais do navegador Edge), acessado pela internet por meio do edge-tts. O
+serviço pertence a terceiros e está sujeito aos termos deles.
+
+Ícones
+------
+Os ícones da interface são da família Lucide (https://lucide.dev), sob a
+licença ISC (parte deles vem do projeto Feather, licença MIT). O texto
+completo está no arquivo LUCIDE-ISC.txt, nesta pasta.
+
+Marcas
+------
+Os nomes de fabricantes e de modelos de rádios citados no programa, assim
+como CHIRP, são marcas de seus respectivos donos. O PYProg é um projeto
+independente, sem vínculo com fabricantes de rádios ou com o projeto CHIRP.
+
+Arquivos que NÃO acompanham o PYProg
+------------------------------------
+Os pacotes de vozes de fábrica (.vpa), os pacotes em inglês do CPS e os
+logotipos dos fabricantes pertencem aos seus autores e não são distribuídos com o
+PYProg. O usuário indica os arquivos do programa oficial (CPS) que já tem.

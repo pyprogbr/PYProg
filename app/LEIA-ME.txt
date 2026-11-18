@@ -1,0 +1,159 @@
+PYPROG
+Programação de rádios: canais, ajustes, vozes e imagem de abertura
+Versão 1.1.0 (beta)
+
+
+1. MODELOS
+
+  Modelo                  Programação          Vozes   Imagem de abertura
+  UV-17 Pro GPS           sim                  sim     sim
+  UV-17 Pro / R / L       sim                  sim     não
+  UV-17R Plus             sim                  não     não
+  UV-21 Pro / Pro GPS     sim                  não     sim
+  UV-5R e compatíveis     sim                  não     não
+  Icom IC-2730A           sim                  não     não
+  Retevis RT3S GPS        sim                  não     não
+
+- UV-5R e compatíveis: UV-5RA, UV-5RE, UV-5R Plus, UV-5X, Retevis RT5R,
+  RT5RV e RT5, Rugged RH5R, Radioddity UV-5R EX e Ansoko A-5R. Não serve
+  para BF-F8HP, UV-82, UV-5X3 ou UV-6.
+- Testados com o rádio: UV-17 Pro GPS, UV-5R, IC-2730A e RT3S. Os demais
+  são experimentais e o programa avisa ao escolhê-los.
+- Na engrenagem, "Rádios..." mostra o que o PYProg faz em cada modelo e escolhe
+  quais aparecem na lista (também pelo item "Escolher rádios...", no fim dela).
+- Na engrenagem, "Preferências..." liga o backup antes de gravar e o controle
+  das faixas de TX (os dois vêm desligados).
+
+
+2. INSTALAÇÃO
+
+1. Execute Instalar_PYProg_<versão>.exe. Não é preciso instalar mais nada.
+   No Windows 7 ou 8, use Windows7_Instalar_PYProg_<versão>.exe.
+2. Se aparecer "O Windows protegeu o computador", clique em "Mais
+   informações" e em "Executar assim mesmo".
+3. Feche o PYProg antes de instalar uma versão nova; o instalador avisa
+   se ele estiver aberto. Preferências e backups são mantidos.
+
+O PYProg avisa quando há versão nova (Atualizar, no rodapé).
+
+
+3. ANTES DE COMEÇAR
+
+1. Ligue o cabo no computador e no rádio, com o conector até o fim.
+2. Ligue o rádio, com volume alto e um canal sem sinal.
+3. No topo, escolha o Rádio e a Porta (COM) do cabo.
+4. Para trocar o indicativo, clique no campo no rodapé do menu lateral.
+
+
+4. RÁDIOS BAOFENG (grupo Programação do menu lateral)
+
+- Ler rádio: carrega canais, zonas e ajustes e guarda uma cópia. Comece
+  sempre por aqui.
+- Canais: duplo clique edita. Arraste com o mouse ou use Ctrl+↑ / Ctrl+↓
+  para mudar a ordem. Botão direito: editar, copiar, colar, bloquear ou
+  liberar TX e apagar.
+- Ajustes do rádio: os itens do menu do rádio; o botão "i" explica cada um.
+- Gravar no rádio: mostra o que mudou, pede uma confirmação e grava. O
+  resultado aparece no rodapé. Com a preferência ligada, guarda antes uma
+  cópia do rádio.
+- Arquivo: backup (.img, o mesmo do CHIRP), exportar a lista de canais
+  (PDF ou CSV) e abrir a pasta de backups.
+- ↶ e ↷ desfazem e refazem (Ctrl+Z e Ctrl+Y).
+
+Bloqueio de TX (com "Controlar as faixas de TX" ligado nas Preferências):
+canais que transmitem fora das faixas liberadas aparecem em vermelho. O
+botão direito no canal bloqueia ou libera o TX; a janela "Bloqueio de TX..."
+tem as ações em lote e a lista de faixas.
+
+
+5. ICOM IC-2730A (grupo Programação do menu lateral)
+
+- Use o cabo da Icom (OPC-2350LU ou compatível) e feche outros programas
+  que estejam usando a porta do cabo.
+- Ler rádio e Gravar no rádio funcionam como nos Baofeng.
+- Arquivo: abre e salva .icf no formato do CS-2730.
+- Canais e bancos: duplo clique edita; arraste ou Ordenar canais muda a
+  ordem, e banco e demais ajustes vão junto.
+
+
+6. RETEVIS RT3S GPS (grupo Programação do menu lateral)
+
+1. Conecte o cabo e ligue o rádio. Feche outros programas que estejam
+   usando o rádio.
+2. Clique em Ler rádio, ou em Arquivo > Abrir arquivo .rdt para editar um
+   arquivo salvo pelo CPS.
+3. Edite. As seções do menu lateral seguem as telas do CPS: Geral, Menu, Botões, Mensagens,
+   Privacidade, Emergência, Contatos e TGs, Grupos de RX, Zonas (lados A
+   e B), Varredura, Canais, DTMF, VFO e GPS.
+4. Clique em Gravar no rádio, ou salve o .rdt e grave pelo CPS.
+
+- Arquivo > Testar a conexão com o rádio mostra se o rádio foi encontrado.
+- O backup antes de gravar segue as Preferências. Ao terminar a leitura
+  ou a gravação, o PYProg reinicia o rádio.
+- Rádios com firmware OpenGD77 não são suportados.
+
+- Canais: duplo clique edita todos os campos (a aba "Mais ajustes" tem os
+  menos usados). Arraste, use Ctrl+↑ / Ctrl+↓ ou Ordenar canais (por nome
+  ou frequência, com a opção de separar analógicos e digitais).
+- Contatos, grupos de RX, zonas e listas de varredura: "Organizar..." muda
+  a ordem (arrastando, com ▲ ▼ ou em ordem alfabética).
+- Ao mudar a ordem de qualquer lista, o PYProg atualiza tudo o que aponta
+  para ela, como as fórmulas de uma planilha: zonas, varreduras, canais,
+  grupos de RX, teclas e GPS continuam ligados aos mesmos itens.
+- Arquivo: importa e exporta a planilha de canais no formato do CPS
+  (botões Import e Export da tela Channel Information).
+- A privacidade cifra a transmissão; o serviço de radioamador não permite
+  transmissões cifradas.
+
+
+7. VOZES (item Vozes do menu lateral; UV-17 Pro GPS e UV-17 Pro / R / L)
+
+1. Na primeira vez, indique um pacote de vozes (.vpa) deste rádio, que
+   preenche os avisos que você não gerar. Sem ele, gere todos os avisos.
+2. Escolha a voz, a velocidade e o volume; "Testar voz" deixa ouvir antes.
+3. Confira os textos de cada aviso e clique em Gerar vozes (precisa de
+   internet).
+4. Clique em Enviar vozes ao rádio e deixe o menu Voice do rádio em
+   English: as falas novas ficam no lugar das vozes em inglês.
+
+- Há vozes em português, inglês e espanhol; com voz em inglês ou espanhol,
+  os avisos são gerados nesse idioma. "Restaurar vozes" volta ao pacote base.
+- O rádio não permite ler as vozes gravadas nele: guarde os seus .vpa
+  (Fazer backup).
+
+
+8. IMAGEM DE ABERTURA (UV-17 Pro GPS, UV-21 Pro e UV-21 Pro GPS)
+
+- Tamanho: 150 x 128 pixels no UV-17 Pro GPS e 128 x 160 (em pé) nos UV-21.
+  O PYProg ajusta qualquer imagem ao tamanho do rádio escolhido.
+- Abra uma imagem ou crie uma tela com até três linhas de texto.
+- Clique em Enviar imagem ao rádio e deixe "Tela ao ligar" em "Logotipo"
+  nos Ajustes do rádio.
+
+
+9. SEUS ARQUIVOS
+
+Ficam em %APPDATA%\EditorVozesBaofeng (Arquivo > "Abrir a pasta de
+backups"): backups das leituras e gravações, rascunhos para recuperação,
+vozes já geradas e preferências. Não apague essa pasta para atualizar.
+
+
+10. CUIDADOS
+
+- Leia o rádio e guarde o backup antes de gravar.
+- Confira o modelo escolhido antes de gravar.
+- Não desligue o rádio nem o cabo durante a gravação.
+- Transmita apenas onde a sua licença permite (normas da Anatel).
+
+Problemas de conexão: confira o cabo, a porta COM e se o rádio está
+ligado; desligue e ligue o rádio e tente de novo. Se o rádio responder de
+forma inesperada, confira o modelo escolhido.
+
+
+11. CONTATO E LICENÇA
+
+PYProg, desenvolvido por PU2KEU. Contato: pu2keu@gmail.com
+Projeto independente, sem vínculo com fabricantes de rádios ou com o
+projeto CHIRP. Distribuído sob a licença GNU GPL versão 3; os créditos e
+as licenças estão no Sobre. Versão de testes (beta), gratuita e sem
+garantia; o uso é de responsabilidade do usuário.

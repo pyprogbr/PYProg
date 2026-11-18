@@ -1,0 +1,33 @@
+PYPROG: HISTÓRICO DE VERSÕES
+
+1.1.1 (beta)
+- Retevis RT3S GPS: ao apagar canais, os canais restantes são renumerados
+  automaticamente para não sobrar buraco na sequência. Zonas e listas de
+  varredura são atualizadas para os números novos, sem precisar reorganizar.
+- Retevis RT3S GPS: a importação de planilha do CPS também renumera ao
+  remover canais excedentes.
+- Retevis RT3S GPS: a lista de tons dos canais analógicos inclui os códigos
+  DCS (D023N a D754N). Para o invertido, digite D023I no campo.
+- Retevis RT3S GPS: em Acrescentar canais à zona, cada lado mostra só os
+  canais que ainda não estão nesse lado.
+
+1.1.0 (beta)
+- Baofeng UV-17 Pro GPS, UV-17 Pro / R / L, UV-17R Plus, UV-21 Pro, UV-21
+  Pro GPS e UV-5R: leitura e gravação pelo cabo, canais, zonas e ajustes,
+  com backup em .img (compatível com o CHIRP).
+- Icom IC-2730A: leitura e gravação pelo cabo, canais, bancos e ajustes;
+  arquivos .icf no formato do CS-2730.
+- Retevis RT3S GPS: edição completa do arquivo .rdt do CPS, com as seções
+  na mesma sequência das telas do CPS, importação e exportação da planilha
+  de canais do CPS, teste de conexão e leitura do rádio pelo USB
+  (experimental).
+- Vozes em português, inglês e espanhol geradas pelo programa (UV-17 Pro
+  GPS e UV-17 Pro / R / L).
+- Imagem de abertura (UV-17 Pro GPS, UV-21 Pro e UV-21 Pro GPS).
+- Menu lateral com as seções de cada rádio, recolhível; topo com rádio,
+  porta COM, identificação da porta e a engrenagem de preferências.
+- Identificação automática da porta COM do rádio.
+- Canais: ordenar, arrastar e mover com Ctrl+↑ / Ctrl+↓; bloqueio de TX
+  fora das faixas liberadas; exportação da lista de canais em PDF ou CSV.
+- Backup antes de gravar (opcional, nas Preferências) e desfazer e refazer.
+- Aviso de versão nova e atualização pelo próprio programa.
