@@ -15,6 +15,7 @@ import arrastar
 import configuracao_radio as cr
 import exportar
 import icom2730
+import organiza as org
 import tema
 
 
@@ -242,7 +243,7 @@ class EditorCanalIcom(tk.Toplevel):
         self.destroy()
 
     def apagar(self):
-        self.aba.radio.erase_memory(self.numero)
+        org.apaga(org.Icom(self.aba.radio, ic), [self.numero])
         self.aba.alterado()
         self.destroy()
 
@@ -302,16 +303,7 @@ class AbaIcom:
                "salvo_estado", "cabecalho")
 
     def _monta_menu_ordenar(self):
-        mo = self.menu_ordenar
-        mo.limpa()
-        if ic.TEM_NOME:
-            mo.add_command(label="Por nome (A a Z)", command=lambda: self.ordenar("nome"))
-        mo.add_command(label="Por frequência", command=lambda: self.ordenar("frequencia"))
-        mo.add_separator()
-        mo.add_nota("Os canais vazios vão para o fim e os números\n"
-                    "são refeitos a partir do 000. Bancos e ajustes\n"
-                    "de cada canal vão junto. Para voltar à ordem\n"
-                    "anterior, use Desfazer (↶).")
+        org.monta_menu(self.menu_ordenar, self.ordenar, ic.TEM_NOME)
 
     def define_modelo(self, chave):
         """Troca o rádio Icom. A programação de cada modelo fica guardada
@@ -386,8 +378,8 @@ class AbaIcom:
         arrastar.liga_setas(self.tv, self._soltou, pode=lambda: bool(self.radio) and not self.app.ocupado
                             and not self.busca.get().strip())
         self.menu_canal = tema.MenuDesenhado(self.app.raiz)
-        for rot, fn in [("Editar...", self.editar), ("Copiar", self.copiar), ("Colar", self.colar), (None, None),
-                        ("Apagar", self.apagar)]:
+        for rot, fn in [("Editar...", self.editar), ("Copiar", self.copiar), ("Recortar", self.recortar),
+                        ("Colar", self.colar), (None, None), ("Apagar", self.apagar)]:
             if rot is None:
                 self.menu_canal.add_separator()
             else:
@@ -488,9 +480,19 @@ class AbaIcom:
             return
         sel = [n for n in self._selecionados() if not self.radio.get_memory(n).empty]
         if sel and messagebox.askyesno("Canais", f"Apagar {len(sel)} canal(is)?"):
-            for n in sel:
-                self.radio.erase_memory(n)
+            org.apaga(org.Icom(self.radio, ic), sel)
             self.alterado()
+
+    def recortar(self):
+        if not self._exige():
+            return
+        sel = [n for n in self._selecionados() if not self.radio.get_memory(n).empty]
+        if not sel:
+            return
+        self.copiar()
+        org.apaga(org.Icom(self.radio, ic), sel)
+        self.alterado()
+        self.app.status.config(text=f"{len(sel)} canal(is) recortado(s). Use Colar para colocá-los em outro lugar.")
 
     def copiar(self):
         if self.radio:
@@ -528,8 +530,7 @@ class AbaIcom:
         if novos:
             self.tv.selection_set(novos)
             self.tv.see(novos[0])
-        self.app.status.config(text=f"{len(nums)} canal(is) movido(s) para a posição {mapa[nums[0]]:03d}. "
-                                    "Desfazer (↶) volta a ordem anterior.")
+        self.app.status.config(text=f"{len(nums)} canal(is) movido(s) para a posição {mapa[nums[0]]:03d}.")
 
     def exportar(self):
         if not self._exige():
@@ -556,13 +557,13 @@ class AbaIcom:
     def ordenar(self, por):
         if not self._exige():
             return
-        mapa = ic.ordena(self.radio, por)
-        mudou = sum(1 for a, b in mapa.items() if a != b)
+        ad = org.Icom(self.radio, ic)
+        if not org.ordena(ad, ad.faixas()[0], por):
+            self.app.status.config(text="Os canais já estavam nessa ordem.")
+            return
         self.alterado()
         self.tv.yview_moveto(0)
-        self.app.status.config(text=(f"Canais ordenados por {'nome' if por == 'nome' else 'frequência'}: "
-                                     f"{mudou} mudaram de número. Para voltar, use Desfazer (↶)."
-                                     if mudou else "Os canais já estavam nessa ordem."))
+        self.app.status.config(text="Canais ordenados por " + ("nome." if por == org.POR_NOME else "frequência."))
 
     # ------------------------------------------------------------------ bancos
     def _monta_bancos(self):

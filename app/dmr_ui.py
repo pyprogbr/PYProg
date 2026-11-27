@@ -551,8 +551,7 @@ class AbaDMR:
         mo.add_separator()
         mo.add_nota("Os canais vazios vão para o fim e os números são\n"
                     "refeitos a partir do 1. As zonas e as listas de\n"
-                    "varredura continuam com os mesmos canais.\n"
-                    "Para voltar, use Desfazer (↶).")
+                    "varredura continuam com os mesmos canais.")
         mo.anexa(mb)
         mb.pack(side="left")
         ttk.Label(self.f_canais, text="Arraste um canal para mudar a ordem  ·  botão direito: mais opções",
@@ -663,7 +662,7 @@ class AbaDMR:
             self.tv.selection_set(novos)
             self.tv.see(novos[0])
         self.app.status.config(text=f"{len(nums)} canal(is) movido(s) para a posição {mapa[nums[0]]}. "
-                                    "Zonas e varreduras foram atualizadas. Desfazer (↶) volta.")
+                                    "Zonas e varreduras foram atualizadas.")
 
     def ordenar(self, por, por_modo=False):
         if not self._exige():
@@ -1459,8 +1458,7 @@ class AbaDMR:
             mapa = fazer(ordem)
             self.alterado()
             mudou = sum(1 for a, b in mapa.items() if a != b)
-            self.app.status.config(text=f"{nome}: {mudou} mudaram de posição; referências atualizadas. "
-                                        "Desfazer (↶) volta.")
+            self.app.status.config(text=f"{nome}: {mudou} mudaram de posição; referências atualizadas.")
         OrganizaLista(self, titulo, itens, ok, self._NOTA_ORG.format(o=o))
 
     def organiza_contatos(self):

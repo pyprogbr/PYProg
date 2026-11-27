@@ -128,8 +128,8 @@ class AbaImagem:
 
     def _texto_descricao(self):
         w, h = ia.tamanho(self._modelo)
-        nome = {"UV17ProGPS": "O UV-17 Pro GPS", "UV21Pro": "O UV-21 Pro",
-                "UV21ProGPS": "O UV-21 Pro GPS"}.get(self._modelo, "Este rádio")
+        nome = {"UV17ProGPS": "O Baofeng UV-17 Pro GPS", "UV21Pro": "O Baofeng UV-21 Pro V2",
+                "UV21ProGPS": "O Baofeng UV-21 Pro GPS"}.get(self._modelo, "Este rádio")
         return (f"{nome} usa uma imagem de {w} x {h} pixels. Escolha um arquivo (PNG, JPG ou BMP de "
                 "qualquer tamanho) ou crie uma tela com o seu indicativo.")
 

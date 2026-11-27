@@ -25,7 +25,7 @@ from arquivos import grava_atomico, assinatura
 from array import array
 from dataclasses import dataclass, field
 
-VERSAO = "1.0.0 (beta)"
+VERSAO = "1.0.1 (beta)"
 
 # ---------------------------------------------------------------------------
 # Modelos

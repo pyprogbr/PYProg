@@ -408,11 +408,13 @@ def grava_ajuste(img: bytearray, chave: str, valor, defs=None, base=POS_AJUSTES)
 # --------------------------------------------------------------------- zonas
 
 def le_nome_zona(img: bytes, i: int) -> str:
-    b = bytes(img[POS_ZONAS + i * 16: POS_ZONAS + (i + 1) * 16]).split(b"\xff")[0]
+    # Nome termina em 0xFF ou 0x00; bytes de controle que sobram não são letras e saem do nome
+    b = bytes(img[POS_ZONAS + i * 16: POS_ZONAS + (i + 1) * 16]).split(b"\xff")[0].split(b"\x00")[0]
     try:
-        return b.decode("gb2312").strip()
+        texto = b.decode("gb2312")
     except UnicodeDecodeError:
-        return b.decode("latin-1").strip()
+        texto = b.decode("latin-1")
+    return "".join(ch for ch in texto if ch.isprintable()).strip()
 
 
 def grava_nome_zona(img: bytearray, i: int, nome: str):
@@ -747,20 +749,23 @@ PERFIL_UV17 = Perfil(
 PERFIL_UV17.decodifica = lambda n, b: decodifica_canal(n, b)
 PERFIL_UV17.codifica = lambda c: codifica_canal(c)
 
-# UV-21 Pro (classe UV21ProV2 do CHIRP): mesmo mapa do UV-17 Pro, outras faixas.
+# UV-21 Pro V2 (classe UV21ProV2 do CHIRP): mesmo mapa do UV-17 Pro, outras faixas.
 # Transmite em 136-174, 220-260 e 400-480 MHz; 350-390 e 480-520 MHz são só recepção.
-PERFIL_UV21 = Perfil(**{**PERFIL_UV17.__dict__, "chave": "UV21", "nome": "UV-21 Pro",
+PERFIL_UV21 = Perfil(**{**PERFIL_UV17.__dict__, "chave": "UV21", "nome": "UV-21 Pro V2",
+                        "total_zonas": 1, "canais_por_zona": TOTAL_CANAIS,   # o manual não tem zonas
                         "faixas": [(136.0, 174.0), (220.0, 260.0), (400.0, 480.0)],
                         "so_rx": [(350.0, 390.0), (480.0, 520.0)]})
 
 
-def _uv21_decodifica(n, b):
-    c = decodifica_canal(n, b)
-    c.perfil = PERFIL_UV21
-    return c
+def _uv21_decodifica(perfil):
+    def decodifica(n, b):
+        c = decodifica_canal(n, b)
+        c.perfil = perfil
+        return c
+    return decodifica
 
 
-PERFIL_UV21.decodifica = _uv21_decodifica
+PERFIL_UV21.decodifica = _uv21_decodifica(PERFIL_UV21)
 
 
 def _perfil_uv5r(faixas):
@@ -777,11 +782,20 @@ PERFIL_UV5R = _perfil_uv5r(uv5r.FAIXAS_NORMAIS)
 PERFIL_UV5R_220 = _perfil_uv5r(uv5r.FAIXAS_220)
 
 
+# UV-21 Pro GPS: mesmas faixas e mapa do UV-21 Pro V2, só o nome muda
+# O GPS mantém as zonas do UV-17 Pro GPS, de onde vem o mapa (não confirmado pelo manual)
+PERFIL_UV21_GPS = Perfil(**{**PERFIL_UV21.__dict__, "chave": "UV21GPS", "nome": "UV-21 Pro GPS",
+                            "total_zonas": TOTAL_ZONAS, "canais_por_zona": CANAIS_POR_ZONA})
+PERFIL_UV21_GPS.decodifica = _uv21_decodifica(PERFIL_UV21_GPS)
+
+
 def perfil_de(chave, imagem=None):
     if chave == "UV5R":
         if imagem is not None and bytes(imagem[3:4]) == uv5r.VHF_220:
             return PERFIL_UV5R_220
         return PERFIL_UV5R
-    if chave in ("UV21Pro", "UV21ProGPS"):
+    if chave == "UV21Pro":
         return PERFIL_UV21
+    if chave == "UV21ProGPS":
+        return PERFIL_UV21_GPS
     return PERFIL_UV17

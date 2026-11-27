@@ -12,10 +12,28 @@ from tkinter import filedialog, messagebox, ttk
 import ajustes_uv5r as aj5
 import arrastar
 import configuracao_radio as cr
+import conversao as cv
+import organiza as org
+import repetidoras_ui as ru
+import conversao_ui as cu
 from chirp import settings as cs
 import exportar
 import programacao as pg
 import tema
+
+# Modelos aceitos como destino da conversão: (rótulo, chave do modelo)
+# Modelos cujos arquivos (.img) podem ser convertidos para o rádio carregado
+ORIGENS_CONVERSAO = {"UV17ProGPS", "UV17Pro", "UV21Pro", "UV21ProGPS", "UV5R"}
+
+
+def aplica_canais(prog, canais):
+    """Põe a lista de canais na programação (os demais ficam vazios). Não grava nada."""
+    por_numero = {c.numero: c for c in canais}
+    for n in range(1, prog.perfil.total_canais + 1):
+        if n in por_numero:
+            prog.define_canal(por_numero[n])
+        else:
+            prog.apaga(n)
 
 # Varredura e BCL ficam no formulário do canal (a lista cabe sem rolar para o lado)
 COLUNAS = [("num", "Nº", 5), ("nome", "Nome", 17), ("rx", "RX (MHz)", 11), ("duplex", "Duplex", 9),
@@ -173,8 +191,7 @@ class EditorCanal(tk.Toplevel):
         self.destroy()
 
     def apagar(self):
-        self.aba.prog.apaga(self.base.numero)
-        self.aba.alterado()
+        self.aba.apaga_canais([self.base.numero])
         self.destroy()
 
 
@@ -200,10 +217,12 @@ class AbaProgramacao:
         app.botoes_ocupado += [self.bt_ler, self.bt_gravar]
         self.mb_arquivo = ttk.Menubutton(barra, text="Arquivo", width=9)
         menu = tema.MenuDesenhado(app.raiz)
-        menu.add_command(label="Fazer backup (.img)...", command=self.salvar)
-        menu.add_command(label="Restaurar backup (.img)...", command=self.abrir)
+        menu.add_command(label="Salvar arquivo (.img)...", command=self.salvar)
+        menu.add_command(label="Abrir arquivo (.img)...", command=self.abrir)
+        menu.add_command(label="Fechar arquivo", command=self.fechar)
         menu.add_separator()
         menu.add_command(label="Exportar a lista de canais (PDF ou CSV)...", command=self.exportar)
+        menu.add_command(label="Importar canais de outro rádio...", command=self.importar_outro_radio)
         menu.add_separator()
         menu.add_command(label="Abrir a pasta de backups", command=self.app.abre_pasta_backup)
         menu.anexa(self.mb_arquivo)
@@ -241,6 +260,12 @@ class AbaProgramacao:
         self.cb_zona = ttk.Combobox(topo, textvariable=self.zona, state="readonly", width=32, style="Alto.TCombobox")
         self.cb_zona.pack(side="left")
         self.cb_zona.bind("<<ComboboxSelected>>", lambda e: self._preenche_tabela())
+        self.mb_ordenar = ttk.Menubutton(topo, text="Ordenar canais")
+        self.menu_ordenar = tema.MenuDesenhado(self.app.raiz)
+        org.monta_menu(self.menu_ordenar, self.ordena_canais, True)
+        self.menu_ordenar.anexa(self.mb_ordenar)
+        self.mb_ordenar.pack(side="left", padx=(12, 0))
+        self.app.botoes_ocupado.append(self.mb_ordenar)
         self.busca = tk.StringVar()
         campo, _ent = tema.campo_busca(topo, self.busca, "Buscar nome, número ou frequência", 30)
         campo.pack(side="left", padx=(12, 0))
@@ -284,7 +309,8 @@ class AbaProgramacao:
             self.legenda.pack(side="bottom", fill="x", padx=16, pady=(0, 6), before=self._topo)
         # Menu do botão direito (Button-2 no macOS)
         self.menu_canal = tema.MenuDesenhado(self.app.raiz)
-        for rot, fn in [("Editar...", self.editar), ("Copiar", self.copiar), ("Colar", self.colar), (None, None),
+        for rot, fn in [("Editar...", self.editar), ("Copiar", self.copiar), ("Recortar", self.recortar),
+                        ("Colar", self.colar), (None, None),
                         ("Bloquear TX", lambda: self.tx_selecionados(False)),
                         ("Liberar TX", lambda: self.tx_selecionados(True)), (None, None), ("Apagar", self.apagar)]:
             if rot is None:
@@ -397,7 +423,63 @@ class AbaProgramacao:
             self.tv.see(novos[0])
         r = self.prog.perfil.rotulo
         self.app.status.config(text=f"{len(sel)} canal(is) movido(s) para a posição {r(mapa[int(sel[0])])}. "
-                                    "Desfazer (↶) volta a ordem anterior.")
+                                    )
+
+    def importar_outro_radio(self):
+        """Importa canais de um backup (.img) de outro rádio para a programação carregada, convertidos
+        às regras do modelo carregado. Mostra a conferência; nada é gravado no rádio."""
+        if not self._exige_prog():
+            return
+        caminho = filedialog.askopenfilename(
+            title="Escolher o arquivo do outro rádio",
+            initialdir=self.app.pasta_backup(),
+            filetypes=[("Programação do rádio (.img)", "*.img"), ("Todos", "*.*")])
+        if not caminho:
+            return
+        try:
+            chave_origem, dados, _meta = cr.abre_img(caminho)
+            if chave_origem not in ORIGENS_CONVERSAO:
+                raise ValueError("Esse arquivo não é de um modelo que o PYProg converte para este rádio.")
+            origem = pg.Programacao(dados, chave_origem)
+        except Exception as e:
+            messagebox.showerror("Importar canais", str(e))
+            return
+        destino = self.prog.perfil
+        linhas = cv.converte(origem.canais, destino)
+        if not linhas:
+            messagebox.showinfo("Importar canais", "Não há canais em uso no arquivo escolhido.")
+            return
+        cu.JanelaRevisao(self.app, linhas, destino,
+                         ao_importar=self._importa_canais,
+                         origem_nome=os.path.basename(caminho))
+
+    def _importa_canais(self, canais):
+        """Coloca os canais convertidos na programação carregada. Não grava no rádio."""
+        if not messagebox.askyesno(
+                "Importar canais",
+                f"Substituir todos os canais da programação atual pelos {len(canais)} canais convertidos?",
+                parent=self.app.raiz):
+            return False
+        aplica_canais(self.prog, canais)
+        self.prog.tx_bloqueados = {}
+        self._registra_edicao()
+        self._atualiza_tudo()
+        self.app.status.config(text=f"{len(canais)} canais importados. Confira e use Gravar no rádio.")
+        return True
+
+    def fechar(self):
+        """Fecha a programação aberta, sem gravar. Pede confirmação se houver alterações."""
+        if not self.prog:
+            return
+        if not self._confirma_descartar():
+            return
+        self.prog = None
+        self.origem = ""
+        self.caminho = ""
+        self.modificado = False
+        self.base_gravacao = None
+        self.historico, self.pos_historico = [], -1
+        self._atualiza_tudo()
 
     def exportar(self):
         if not self._exige_prog():
@@ -469,9 +551,45 @@ class AbaProgramacao:
             return
         sel = self._selecionados()
         if sel and messagebox.askyesno("Canais", f"Apagar {len(sel)} canal(is)?"):
-            for n in sel:
-                self.prog.apaga(n)
-            self.alterado()
+            self.apaga_canais(sel)
+
+    def apaga_canais(self, numeros):
+        """Apaga os canais e puxa os seguintes para cima, sem buracos na faixa de cada um."""
+        org.apaga(org.Uv(self.prog), numeros)
+        self.alterado()
+
+    def recortar(self):
+        if not self._exige_prog():
+            return
+        sel = self._selecionados()
+        if not sel:
+            return
+        self.copia = [self.prog.canal(n) for n in sel]
+        self.apaga_canais(sel)
+        self.app.status.config(text=f"{len(sel)} canal(is) recortado(s). Use Colar para colocá-los em outro lugar.")
+
+    def ordena_canais(self, por):
+        """Ordena a zona escolhida (rádios com zonas) ou a lista inteira (sem zonas)."""
+        if not self._exige_prog():
+            return
+        ad = org.Uv(self.prog)
+        faixas = ad.faixas()
+        faixa = faixas[max(0, self.cb_zona.current())] if self.prog.perfil.tem_zonas else faixas[0]
+        if not org.ordena(ad, faixa, por):
+            self.app.status.config(text="Os canais já estavam nessa ordem.")
+            return
+        self.alterado()
+        self.app.status.config(text="Canais ordenados por " + ("nome." if por == org.POR_NOME else "frequência."))
+
+    def _aplica_abas_modelo(self):
+        """Abas Zonas e DTMF conforme o rádio: o do arquivo carregado, ou o modelo escolhido."""
+        if self.prog:
+            perfil, chave = self.prog.perfil, self.chave
+        else:
+            chave = self.app.modelo_radio
+            perfil = pg.perfil_de(chave)
+        self.nb.tab(self.f_zonas, state="normal" if perfil.tem_zonas else "hidden")
+        self.nb.tab(self.f_dtmf, state="normal" if chave == "UV17ProGPS" else "hidden")
 
     def copiar(self):
         if self.prog:
@@ -821,7 +939,7 @@ class AbaProgramacao:
 
     def _atualiza_tudo(self):
         # Zonas só existem no UV-17 (o UV-5R tem uma lista única de 128 canais)
-        self.nb.tab(self.f_zonas, state="normal" if not self.prog or self.prog.perfil.tem_zonas else "hidden")
+        self._aplica_abas_modelo()
         tema.alterna_inicio(self.aviso, self._topo, self.tv.master, not self.prog)
         if self.prog:
             i = max(0, self.cb_zona.current())
@@ -830,7 +948,6 @@ class AbaProgramacao:
         else:
             self.cb_zona["values"] = []
         self._preenche_tabela()
-        self.nb.tab(self.f_dtmf, state="normal" if not self.prog or self.chave == "UV17ProGPS" else "hidden")
         self._monta_zonas()
         self._monta_ajustes()
         self._monta_dtmf()
@@ -1096,7 +1213,7 @@ class AbaProgramacao:
             return
         erros = self.desbloqueia(numeros) if acao == "liberar" else []
         n = len(numeros) - len(erros) if acao == "liberar" else self.bloqueia(numeros)
-        self.app.status.config(text=f"TX: {n} canal(is) alterado(s). Use Gravar no rádio para aplicar; Desfazer reverte a ação.")
+        self.app.status.config(text=f"TX: {n} canal(is) alterado(s). Use Gravar no rádio para aplicar.")
         if erros:
             messagebox.showwarning("TX", "\n".join(erros[:10]))
 

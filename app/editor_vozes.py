@@ -8,6 +8,7 @@ imagem de abertura dos Baofeng compatíveis.
 import json
 import os
 import queue
+import re
 import subprocess
 import sys
 import tempfile
@@ -28,7 +29,9 @@ import icom_ui
 import imagem_ui
 import interrupcao
 import licencas
+import programacao
 import programacao_ui
+import repetidoras_ui
 import tema
 import vozes_core as vc
 
@@ -39,12 +42,9 @@ SUBTITULO_APP = "Programação de rádios"
 TITULO = f"{NOME_APP} {vc.VERSAO}"
 # Rádios conhecidos, na ordem da lista. A janela "Rádios" (engrenagem) escolhe quais aparecem.
 NOMES_RADIO = {
-    "UV17ProGPS": "UV-17 Pro GPS",
-    "UV17Pro": vc.MODELOS["UV17Pro"].nome,
-    "UV17RPlus": "UV-17R Plus",
-    "UV21Pro": "UV-21 Pro",
-    "UV21ProGPS": "UV-21 Pro GPS",
-    "UV5R": "UV-5R",
+    "UV17ProGPS": "Baofeng UV-17 Pro GPS",
+    "UV21Pro": "Baofeng UV-21 Pro V2",
+    "UV5R": "Baofeng UV-5R",
     "IC2730A": "Icom IC-2730A",
     "RT3S": "Retevis RT3S GPS",
 }
@@ -53,30 +53,20 @@ NOMES_RADIO = {
 RADIOS_ICOM = {"IC2730A"}
 RADIOS_DMR = {"RT3S"}           # só o arquivo .rdt do CPS
 GRUPOS_RADIO = [
-    ("Baofeng, família UV-17", ["UV17ProGPS", "UV17Pro", "UV17RPlus", "UV21Pro", "UV21ProGPS"]),
+    ("Baofeng, família UV-17", ["UV17ProGPS", "UV21Pro"]),
     ("Baofeng, família UV-5R", ["UV5R"]),
     ("Icom", ["IC2730A"]),
     ("DMR (organiza o arquivo .rdt do programa oficial)", ["RT3S"]),
 ]
-NOMES_MEUS_RADIOS = {"UV5R": "UV-5R (UV-5RA, UV-5RE, UV-5X, Retevis RT5R...)",
-                     "UV17Pro": "UV-17 Pro, UV-17R e UV-17L",
+NOMES_MEUS_RADIOS = {"UV5R": "Baofeng UV-5R (UV-5RA, UV-5RE, UV-5X, Retevis RT5R...)",
                      "RT3S": "Retevis RT3S GPS (TYT MD-UV380 e MD-UV390)"}
 # Tabela da janela "Rádios": programação, vozes, imagem, detalhes
 TABELA_RADIOS = {
-    "UV17ProGPS": ("sim", "sim", "sim", "Programação, vozes e imagem de abertura (150 x 128)."),
-    "UV17Pro": ("sim", "sim", "não", "Vale para UV-17 Pro, UV-17R e UV-17L. Programação e vozes."),
-    "UV17RPlus": ("sim", "não", "não", "Mesma comunicação e mesmo mapa de memória do UV-17 Pro."),
-    "UV21Pro": ("sim", "não", "sim", "UV-21 Pro V2, sem GPS. Imagem de abertura de 128 x 160. O primeiro "
-                                           "UV-21 Pro (V1) não é suportado."),
-    "UV21ProGPS": ("sim", "não", "sim", "Mesma comunicação do UV-17 Pro GPS, com as faixas do UV-21 Pro. "
-                                              "Imagem de abertura de 128 x 160."),
-    "UV5R": ("sim", "não", "não", "Vale também para UV-5RA, UV-5RE, UV-5R Plus, UV-5X, Retevis RT5R, RT5RV "
-                                        "e RT5, Rugged RH5R, Radioddity UV-5R EX e Ansoko A-5R. Não use para "
-                                        "BF-F8HP, UV-82, UV-5X3 ou UV-6."),
-    "IC2730A": ("sim", "não", "não", "Canais, bancos e ajustes, com arquivos .icf do programa da Icom "
-                                           "(CS-2730)."),
-    "RT3S": ("sim", "não", "não", "TYT MD-UV380/UV390. Também edita o arquivo .rdt. "
-                                         "Com firmware OpenGD77, não é suportado."),
+    "UV17ProGPS": ("sim", "sim", "sim", "Programação, vozes e imagem de abertura."),
+    "UV21Pro": ("sim", "não", "sim", "Apenas UV-21 Pro V2. Programação e imagem de abertura."),
+    "UV5R": ("sim", "não", "não", "Programação. Compatível com os rádios UV-5RA, UV-5RE, UV-5R Plus, UV-5X, Retevis RT5R, RT5RV e RT5, Rugged RH5R, Radioddity UV-5R EX e Ansoko A-5R."),
+    "IC2730A": ("sim", "não", "não", "Programação."),
+    "RT3S": ("sim", "não", "não", "Programação. Compatível com o rádio TYT MD-UV380/UV390. Não é compatível com o OpenGD77."),
 }
 ESCOLHER_RADIOS = "Escolher rádios..."
 # Ícone de cada seção do menu lateral (pelo nome da seção)
@@ -86,34 +76,17 @@ ICONES_SECAO = {
     "Zonas": "map-pin", "Varredura": "scan-search", "Canais": "radio", "DTMF": "grip", "VFO": "activity",
     "GPS": "satellite", "Bancos": "library", "Ajustes do rádio": "settings",
 }
-TESTADOS = {"UV17ProGPS", "UV5R", "IC2730A", "RT3S"}          # lidos e gravados com sucesso num rádio real
 MEUS_RADIOS_PADRAO = ["UV17ProGPS", "UV21Pro", "UV5R", "IC2730A", "RT3S"]
 # Linha do rodapé ao escolher o modelo
 RECURSOS_RADIO = {
     "UV17ProGPS": "programação, vozes e imagem de abertura.",
-    "UV17Pro": "programação e vozes.",
-    "UV17RPlus": "só a programação (canais, zonas e ajustes). Vozes e imagem de abertura não foram testadas "
-                 "neste rádio.",
     "UV21Pro": "programação e imagem de abertura (as vozes deste rádio ainda não podem ser trocadas).",
-    "UV21ProGPS": "programação e imagem de abertura (as vozes deste rádio ainda não podem ser trocadas).",
     "UV5R": "só a programação (canais e ajustes). As vozes e a imagem de abertura deste rádio não podem "
             "ser trocadas pelo cabo.",
     "IC2730A": "canais, bancos e ajustes.",
     "RT3S": "programação completa, também pelo arquivo .rdt.",
 }
 _RISCO = "\n\nLeia o rádio antes de gravar, confira os canais e guarde o backup. O uso é por sua conta e risco."
-# Aviso ao escolher um modelo ainda não testado em todas as funções
-AVISO_EXPERIMENTAL = {
-    "UV5R": "O firmware desse modelo muda sem aviso, e o programa pode não funcionar com o seu aparelho "
-            "ou com um compatível.",
-    "UV21Pro": "O UV-21 Pro usa a mesma comunicação do UV-17 Pro, mas esta opção ainda não foi testada "
-               "com o rádio, nem na leitura nem na gravação." + _RISCO,
-    "UV21ProGPS": "O UV-21 Pro GPS usa a mesma comunicação do UV-17 Pro GPS, com as faixas do UV-21 Pro, "
-                  "mas esta opção ainda não foi testada com o rádio." + _RISCO,
-    "UV17RPlus": "O UV-17R Plus usa a mesma comunicação e o mesmo mapa de memória do UV-17 Pro, mas esta "
-                 "opção ainda não foi testada com o rádio." + _RISCO,
-}
-
 COR_FABRICA = tema.C["suave"]
 COR_PERSONALIZADA = tema.C["ok"]
 
@@ -123,6 +96,48 @@ def pasta_config():
     p = os.path.join(base, "EditorVozesBaofeng")
     os.makedirs(p, exist_ok=True)
     return p
+
+
+ARQ_INDICATIVO = "indicativo.txt"
+
+
+def grava_indicativo_arquivo(txt):
+    """Guarda o indicativo em arquivo próprio na pasta de configuração (sobrevive a atualizações)."""
+    if not txt:
+        return
+    try:
+        with open(os.path.join(pasta_config(), ARQ_INDICATIVO), "w", encoding="utf-8") as f:
+            f.write(txt)
+    except OSError:
+        pass
+
+
+def recupera_indicativo():
+    """Usado quando config.json não tem o indicativo: lê indicativo.txt ou, se não houver,
+    o indicativo que aparece no nome dos backups mais recentes (ex.: Config_..._PU2KEU.img)."""
+    try:
+        with open(os.path.join(pasta_config(), ARQ_INDICATIVO), encoding="utf-8") as f:
+            txt = f.read().strip().upper()[:cr.TAM_INDICATIVO]
+        if txt:
+            return txt
+    except OSError:
+        pass
+    pasta = os.path.join(pasta_config(), "Backups")
+    if not os.path.isdir(pasta):
+        return ""
+    proprios = {k.upper() for k in list(vc.MODELOS) + list(NOMES_RADIO)}
+    melhor, melhor_t = "", -1.0
+    for nome in os.listdir(pasta):
+        m = re.search(r"_([A-Za-z0-9][A-Za-z0-9-]{1,15})\.[A-Za-z0-9]+$", nome)
+        if not m or m.group(1).upper() in proprios:
+            continue
+        try:
+            t = os.path.getmtime(os.path.join(pasta, nome))
+        except OSError:
+            continue
+        if t > melhor_t:
+            melhor, melhor_t = m.group(1).upper(), t
+    return melhor
 
 
 ARQ_ERROS = "erros.log"
@@ -310,6 +325,8 @@ class App:
         self.linhas = []
         self.reprodutor = Reprodutor()
         self.cfg = self._carrega_cfg()
+        if not self.cfg.get("indicativo"):
+            self.cfg["indicativo"] = recupera_indicativo()
         vc.PASTA_FABRICA_USUARIO = os.path.join(pasta_config(), "Fabrica")
         self._indicativo_do_instalador()
         cr.define_indicativo(self.cfg.get("indicativo", cr.INDICATIVO))
@@ -322,7 +339,7 @@ class App:
         # por isso o pacote de vozes continua sendo o do último modelo com vozes.
         self.modelo_radio = self.cfg.get("modelo_radio", self.pacote.modelo.chave)
         if self.modelo_radio not in NOMES_RADIO:
-            self.modelo_radio = self.pacote.modelo.chave
+            self.modelo_radio = "UV17ProGPS"
         meus = [k for k in self.cfg.get("meus_radios", MEUS_RADIOS_PADRAO) if k in NOMES_RADIO]
         if self.modelo_radio not in meus:
             meus.append(self.modelo_radio)
@@ -384,6 +401,7 @@ class App:
         self.cfg["voz"] = self.voz.get()
         self.cfg["letra"] = self.tam_letra
         self.cfg["indicativo"] = cr.INDICATIVO
+        grava_indicativo_arquivo(cr.INDICATIVO)
         try:
             grava_json(os.path.join(pasta_config(), "config.json"), self.cfg)
         except Exception:
@@ -394,13 +412,17 @@ class App:
         Vale quando muda (nova instalação); campo em branco no instalador mantém o atual."""
         arq = os.path.join(os.path.dirname(os.path.abspath(__file__)), "indicativo_instalacao.txt")
         try:
-            with open(arq, encoding="utf-16") as f:
-                txt = f.read().strip()
+            with open(arq, "rb") as f:
+                bruto = f.read()
+            # UTF-16 (com BOM) ou UTF-8, conforme o instalador gravou
+            enc = "utf-16" if bruto[:2] in (b"\xff\xfe", b"\xfe\xff") else "utf-8-sig"
+            txt = bruto.decode(enc).strip()
         except (OSError, UnicodeError):
             return
         if txt and self.cfg.get("indicativo_instalacao") != txt:
             self.cfg["indicativo"] = txt
             self.cfg["indicativo_instalacao"] = txt
+            grava_indicativo_arquivo(txt)
 
     def titulo_janela(self):
         return TITULO + (f"  |  {cr.INDICATIVO}" if cr.INDICATIVO else "")
@@ -432,6 +454,7 @@ class App:
         if hasattr(self, "imagem"):
             self.imagem.novo_indicativo(self.cfg.get("indicativo", ""), cr.INDICATIVO)
         self.cfg["indicativo"] = cr.INDICATIVO
+        grava_indicativo_arquivo(cr.INDICATIVO)
         try:
             grava_json(os.path.join(pasta_config(), "config.json"), self.cfg)
         except Exception:
@@ -526,9 +549,22 @@ class App:
             self.modelo.set(NOMES_RADIO[self.modelo_radio])   # seletor sempre mostra o modelo em uso
         if hasattr(self, "status"):
             self.status.config(text=f"{NOMES_RADIO[self.modelo_radio]}: {RECURSOS_RADIO[self.modelo_radio]}")
+        if hasattr(self, "programacao"):
+            self.programacao._aplica_abas_modelo()
         self._atualiza_lateral()
 
     # ------------------------------------------------------------ menu lateral
+    def buscar_repetidoras_janela(self):
+        """Busca de repetidoras: não precisa de arquivo aberto; o rádio escolhido define os limites."""
+        if self.modelo_radio in RADIOS_ICOM or self.modelo_radio in RADIOS_DMR:
+            messagebox.showinfo("Buscar repetidoras",
+                                "A busca de repetidoras por enquanto vale só para os rádios Baofeng.",
+                                parent=self.raiz)
+            return
+        aba = self.programacao
+        perfil = aba.prog.perfil if aba.prog else programacao.perfil_de(self.modelo_radio)
+        repetidoras_ui.JanelaRepetidoras(self, perfil, aba if aba.prog else None)
+
     def _aba_ativa(self):
         """Tela de programação do rádio escolhido (Baofeng, Icom ou DMR)."""
         if self.modelo_radio in RADIOS_ICOM:
@@ -580,6 +616,8 @@ class App:
         """Recolhido, a lateral mostra só os ícones: somem o nome da marca e o indicativo."""
         if not hasattr(self, "textos_marca"):
             return
+        if hasattr(self, "lbl_logo"):  # recolhido, a marca vira o ícone pequeno
+            self.lbl_logo.configure(image=self._icone_cab if recolhido else self._logo_cab)
         if recolhido:
             self.textos_marca.pack_forget()
             self.rodape_lateral.pack_forget()
@@ -607,28 +645,23 @@ class App:
                           "seleção do topo. Clique num modelo para ver os detalhes.", style="Suave.TLabel", wraplength=900,
                   justify="left").pack(anchor="w", pady=(2, 10))
         colunas = [("mostrar", "Ativo", 80), ("modelo", "Modelo", 470), ("prog", "Programação", 120),
-                   ("vozes", "Vozes", 70), ("imagem", "Imagem", 85), ("situacao", "Situação", 115)]
+                   ("vozes", "Vozes", 70), ("imagem", "Imagem", 85)]
         tv = ttk.Treeview(f, columns=[c for c, _, _ in colunas], show="headings", height=len(NOMES_RADIO),
                           selectmode="browse")
         for c, rot, larg in colunas:
             tv.heading(c, text=rot)
             tv.column(c, width=larg, anchor="w" if c == "modelo" else "center", stretch=c == "modelo")
-        tv.tag_configure("experimental", foreground=tema.C["aviso"])
         marcados = {k: k in self.meus_radios for k in NOMES_RADIO}
 
         def linha(k):
             prog, voz, img, _ = TABELA_RADIOS[k]
             nome = NOMES_RADIO[k] if k == "UV5R" else NOMES_MEUS_RADIOS.get(k, NOMES_RADIO[k])
-            return ("✓" if marcados[k] else "", nome, prog, voz, img,
-                    "testado" if k in TESTADOS else "experimental")
+            return ("✓" if marcados[k] else "", nome, prog, voz, img)
         for k in NOMES_RADIO:
-            tv.insert("", "end", iid=k, values=linha(k), tags=() if k in TESTADOS else ("experimental",))
+            tv.insert("", "end", iid=k, values=linha(k))
         tv.pack(fill="x")
         detalhe = ttk.Label(f, text="", wraplength=900, justify="left")
         detalhe.pack(anchor="w", fill="x", pady=(10, 0))
-        ttk.Label(f, text="Testado: lido e gravado com sucesso num rádio real. Experimental: segue o CHIRP ou o "
-                          "programa oficial, mas ainda não foi testado com o PYProg.", style="Suave.TLabel",
-                  wraplength=900, justify="left").pack(anchor="w", pady=(10, 0))
 
         def mostra_detalhe(_=None):
             sel = tv.selection()
@@ -721,46 +754,6 @@ class App:
         j.geometry(f"+{r.winfo_rootx() + (r.winfo_width() - j.winfo_reqwidth()) // 2}"
                    f"+{r.winfo_rooty() + max(0, (r.winfo_height() - j.winfo_reqheight()) // 3)}")
 
-    def _aceita_experimental(self, chave):
-        """Aviso de modelo experimental ao escolhê-lo, com 'não mostrar de novo'."""
-        aceitos = self.cfg.setdefault("experimental_aceito", [])
-        if chave not in AVISO_EXPERIMENTAL or chave in aceitos:
-            return True
-        j = tk.Toplevel(self.raiz)
-        j.title("Modelo experimental")
-        j.transient(self.raiz)
-        j.resizable(False, False)
-        f = ttk.Frame(j, padding=18)
-        f.pack(fill="both", expand=True)
-        ttk.Label(f, text=AVISO_EXPERIMENTAL[chave], wraplength=460, justify="left").pack(anchor="w")
-        ttk.Label(f, text="Você aceita o risco?", font=self.fonte_negrito).pack(anchor="w", pady=(14, 8))
-        nao_mostrar = tk.BooleanVar(value=False)
-        ttk.Checkbutton(f, text=f"Não mostrar novamente para o {NOMES_RADIO[chave]}",
-                        variable=nao_mostrar).pack(anchor="w")
-        resposta = {"ok": False}
-        bts = ttk.Frame(f)
-        bts.pack(anchor="w", pady=(16, 0))
-
-        def fecha(ok):
-            resposta["ok"] = ok
-            j.destroy()
-        ttk.Button(bts, text="Sim", command=lambda: fecha(True)).pack(side="left", padx=(0, 8))
-        bt_nao = ttk.Button(bts, text="Não", command=lambda: fecha(False))
-        bt_nao.pack(side="left")
-        j.protocol("WM_DELETE_WINDOW", lambda: fecha(False))
-        j.bind("<Escape>", lambda e: fecha(False))
-        j.update_idletasks()
-        r = self.raiz
-        j.geometry(f"+{r.winfo_rootx() + (r.winfo_width() - j.winfo_reqwidth()) // 2}"
-                   f"+{r.winfo_rooty() + (r.winfo_height() - j.winfo_reqheight()) // 3}")
-        bt_nao.focus_set()
-        j.grab_set()
-        self.raiz.wait_window(j)
-        if resposta["ok"] and nao_mostrar.get():
-            aceitos.append(chave)
-            self._salva_cfg()
-        return resposta["ok"]
-
     def _desenha_engrenagem(self):
         """A engrenagem é desenhada (o símbolo da fonte muda de cara em cada Windows) e segue o A+/A-."""
         self._img_engrenagem = tema.icone("settings", round((self.tam_letra + 5) * 1.5), tema.C["secundario_texto"])
@@ -784,17 +777,13 @@ class App:
         marca.pack(side="top", fill="x", padx=12, pady=(12, 4))
         try:
             self._icone_cab = tk.PhotoImage(file=os.path.join(vc.pasta_dados(), "icone_40.png"))
-            self.lbl_logo = tk.Label(marca, image=self._icone_cab, bg=tema.C["lateral"])
-            self.lbl_logo.pack(side="left", padx=(0, 8))
+            self._logo_cab = tk.PhotoImage(file=os.path.join(vc.pasta_dados(), "logo_marca.png"))
+            self.lbl_logo = tk.Label(marca, image=self._logo_cab, bg=tema.C["lateral"])
+            self.lbl_logo.pack(side="left")
         except tk.TclError:
             pass
         self.textos_marca = tk.Frame(marca, bg=tema.C["lateral"])
         self.textos_marca.pack(side="left")
-        tk.Label(self.textos_marca, text=NOME_APP, bg=tema.C["lateral"], fg=texto,
-                 font=self.fonte_titulo).pack(anchor="w")
-        self.lbl_sub = tk.Label(self.textos_marca, text=f"Versão {vc.VERSAO}", bg=tema.C["lateral"], fg=suave,
-                                font="TkDefaultFont")
-        self.lbl_sub.pack(anchor="w")
         self.rodape_lateral = tk.Frame(self.coluna, bg=tema.C["lateral"])
         self.rodape_lateral.pack(side="bottom", fill="x", padx=12, pady=(4, 12))
 
@@ -810,6 +799,7 @@ class App:
         menu = tema.MenuDesenhado(self.raiz)
         menu.add_command(label="Rádios...", command=self.meus_radios_janela)
         menu.add_command(label="Preferências...", command=self.preferencias_janela)
+        menu.add_command(label="Buscar repetidoras...", command=self.buscar_repetidoras_janela)
         menu.add_separator()
         menu.add_command(label="Aumentar a letra  (A+)", command=lambda: self.muda_letra(1))
         menu.add_command(label="Diminuir a letra  (A-)", command=lambda: self.muda_letra(-1))
@@ -827,6 +817,9 @@ class App:
         # Indicativo editável (até 16 caracteres), só o texto, sem fundo
         caixa = tk.Frame(self.rodape_lateral, bg=tema.C["lateral"])
         caixa.pack(anchor="w")
+        self.lbl_sub = tk.Label(self.rodape_lateral, text=f"Versão {vc.VERSAO}", bg=tema.C["lateral"], fg=suave,
+                                font="TkDefaultFont")
+        self.lbl_sub.pack(anchor="w")
         self.indicativo = tk.StringVar(value=cr.INDICATIVO)
         vcmd = (self.raiz.register(lambda p: len(p) <= cr.TAM_INDICATIVO), "%P")
         self.fonte_indicativo = tkfont.Font(family=base, size=self.tam_letra + 1, weight="bold")
@@ -866,14 +859,14 @@ class App:
                              padx=4, pady=4, cursor="hand2", command=self.atualiza_portas)
         atualiza.pack(side="right", padx=(4, 0))
         self.bt_portas = atualiza
-        _dica_ao_parar(atualiza, "Procurar portas COM de novo")
+        _dica_ao_parar(atualiza, "Atualizar portas")
         bt_id = tk.Button(dir_, image=tema.icone("target", tema.tam_icone() + 2, tema.C["secundario_texto"]),
                           bg=fundo, activebackground=tema.C["secundario_h"], relief="flat", bd=0,
                           highlightthickness=1, highlightbackground=fundo, highlightcolor=tema.C["foco"],
                           padx=4, pady=4, cursor="hand2", command=self.identifica_porta)
         bt_id.pack(side="right", padx=(4, 0))
         self.bt_identifica = bt_id
-        _dica_ao_parar(bt_id, "Descobrir qual porta COM é o rádio ligado (testa as portas uma por uma)")
+        _dica_ao_parar(bt_id, "Localizar porta")
         self.porta = tk.StringVar(value=self.cfg.get("porta", ""))
         self.cb_porta = ttk.Combobox(dir_, textvariable=self.porta, width=9, style="Alto.TCombobox")
         self.cb_porta.pack(side="right")
@@ -1552,7 +1545,7 @@ class App:
             return
         escolhido = self.modelo.get()
         self.modelo.set(NOMES_RADIO[self.modelo_radio])   # o campo só mostra o modelo novo depois do "Sim"
-        if self.ocupado or not self._aceita_experimental(chave):
+        if self.ocupado:
             return
         self.modelo.set(escolhido)
         if chave in vc.MODELOS and chave != self.pacote.modelo.chave:
@@ -1956,6 +1949,16 @@ def main():
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("PYProg.PYProg")
             # sinal para o instalador saber que o programa está aberto (some quando o programa fecha)
             _MUTEX = ctypes.windll.kernel32.CreateMutexW(None, False, "PYProgAberto")
+        except Exception:
+            pass
+    if sys.platform == "win32":
+        # sem isso o Windows amplia a janela como imagem e o texto fica borrado em telas com escala (125%, 150%)
+        try:
+            import ctypes
+            try:
+                ctypes.windll.shell32.SetProcessDpiAwareness(2)  # por monitor
+            except Exception:
+                ctypes.windll.user32.SetProcessDPIAware()
         except Exception:
             pass
     raiz = tk.Tk()
